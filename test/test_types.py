@@ -1,4 +1,7 @@
+import pytest
+
 from dsmath.types import define
+import dsmath.types as T
 
 def test_define():
     @define
@@ -10,6 +13,19 @@ def test_define():
     assert repr(f) == "Foo('a', 1)"
     assert f == Foo('a', 1)
     assert f != Foo('a', 2)
+
+def test_define_with_types():
+    """
+    Nat(x) allows [0, x-1]
+    Count(x) allows [1, x]
+    """
+    @define
+    class Foo:
+        def Foo(k: T.Nat(5)): pass
+
+    with pytest.raises(TypeError): Foo(6)
+
+    assert repr(Foo(4))
 
 def test_init():
     @define

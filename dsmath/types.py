@@ -96,4 +96,11 @@ def define(cls):
 
     return cls
 
+@define
+class Nat:
+    def Nat(x: int): pass
+    def __init__(self):
+        assert isinstance(self.x, int) and self.x >= 0
+
+
 

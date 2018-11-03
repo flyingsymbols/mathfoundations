@@ -5,6 +5,7 @@
 # implemented as a decorator over functions
 # don't need to show defaults... but defaults can change
 
+import abc
 import inspect
 from collections import OrderedDict
 
@@ -32,10 +33,14 @@ def define(cls):
     cls.__defaults__ = OrderedDict()
     cls.__pos_args__ = []
     cls.__kw_args__ = []
+    cls.__types__ = {} # dictionary of name to type annotation, if it exists
 
     for n, p in sig.parameters.items():
         if p.default != p.empty:
             cls.__defaults__[n] = p.default
+
+        if p.annotation != p.empty:
+            cls.__types__[n] = p.annotation
 
         if p.kind == p.KEYWORD_ONLY or cls.__defaults__:
         # If we have seen defaults already, we treat everything as keyword
@@ -54,6 +59,15 @@ def define(cls):
         bound_args = sig.bind(*pvals, **kwvals)
         bound_args.apply_defaults()
         for k, v in bound_args.arguments.items():
+            if k in self.__types__:
+                T = self.__types__[k]
+                if isinstance(T, type):
+                    if not isinstance(v, T):
+                        raise TypeError('{!r} is not in {!s}'.format(v, T.__name__))
+                else: # assume has typecheck attribute
+                    T.typecheck(v)
+
+                
             self.__dict__[k] = v
 
         old_init(self)
@@ -99,8 +113,25 @@ def define(cls):
 @define
 class Nat:
     def Nat(x: int): pass
+
     def __init__(self):
         assert isinstance(self.x, int) and self.x >= 0
+
+    def typecheck(self, val):
+        """
+        semantics of typecheck are to raise TypeError on failure with a message,
+        or to do nothing in the case of success
+        """
+        if not isinstance(val, int):
+            raise TypeError(
+                '{!r} is not in {!r}: needs to be an int'.format(val, self)
+            )
+        if not (0 <= val < self.x):
+            raise TypeError(
+                '{!r} is not in {!r}: must be in [0, {}]'.format(val, self, self.x - 1)
+            )
+
+
 
 
 

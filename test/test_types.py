@@ -1,3 +1,5 @@
+import re
+
 import pytest
 
 from dsmath.types import define
@@ -23,9 +25,19 @@ def test_define_with_types():
     class Foo:
         def Foo(k: T.Nat(5)): pass
 
-    with pytest.raises(TypeError): Foo(6)
+    with pytest.raises(
+        TypeError, match=re.escape('6 is not in Nat(5): must be in [0, 4]')
+    ): Foo(6)
+    assert repr(Foo(4)) == "Foo(4)"
 
-    assert repr(Foo(4))
+    @define
+    class Foo2: 
+        def Foo2(v: int): pass
+
+    with pytest.raises(
+        TypeError, match=re.escape("'a' is not in int")
+    ): Foo2('a')
+    assert repr(Foo2(500)) == "Foo2(500)"
 
 def test_init():
     @define

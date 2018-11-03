@@ -1,0 +1,1 @@
+- pytest.raises doesn't give a good way to do exact matching of the exception message. Right now I have to use re.escape
